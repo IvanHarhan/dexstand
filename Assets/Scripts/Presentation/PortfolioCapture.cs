@@ -47,39 +47,28 @@ public class PortfolioCapture : MonoBehaviour
         var dn = FindFirstObjectByType<MapDayNight>();
         if (dn != null) dn.offset += 14f - MapDayNight.Hour;
 
-        // the player's own view, weapon in hand, then turned a little for a second frame
-        var player = Camera.main;
-        if (player != null)
+        // the player's own view with the weapon: the viewmodel is drawn by the camera stack, which only the game
+        // view composes, so this one is a screen grab scaled up to about 1080 lines
+        Debug.Log($"[Portfolio] game view {Screen.width}x{Screen.height}");
+        for (int a = 0; a < 3; a++)
         {
-            Shot(player, "fp_0");
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForEndOfFrame();
+            var grab = ScreenCapture.CaptureScreenshotAsTexture(Mathf.Max(1, Mathf.RoundToInt(1080f / Screen.height)));
+            System.IO.File.WriteAllBytes(System.IO.Path.Combine(output, $"fp_{a}.png"), grab.EncodeToPNG());
+            Destroy(grab);
+            yield return new WaitForSeconds(1.5f);
         }
 
+        // enabled and on top: MapTileStreamer loads tiles around the active camera, so the far places come in
         var cam = new GameObject("PortfolioCamera").AddComponent<Camera>();
-        cam.enabled = false;
+        cam.depth = 100f;
         cam.fieldOfView = 65f;
         cam.nearClipPlane = 0.05f;
         cam.farClipPlane = 1500f;
         cam.GetUniversalAdditionalCameraData().renderPostProcessing = true;
         var map = GameObject.Find("Map");
         float k = map != null ? map.transform.localScale.x * 3f : 1f;
-
-        // the car, from the front quarter and from behind
         var car = SimpleCar.Current;
-        if (car != null)
-        {
-            // PlayerController sits on the prefab root, which stays at spawn; the camera moves with the body
-            if (player != null) car.RPC_Summon(player.transform.position, player.transform.forward);
-            yield return new WaitForSeconds(3f);
-            var t = car.transform;
-            Debug.Log($"[Portfolio] car {car.name} at {t.position}");
-            cam.transform.position = t.position + t.forward * 2.2f + t.right * 1.6f + Vector3.up * 0.7f;
-            cam.transform.LookAt(t.position + Vector3.up * 0.3f);
-            Shot(cam, "car_front");
-            cam.transform.position = t.position - t.forward * 2.6f - t.right * 0.9f + Vector3.up * 0.9f;
-            cam.transform.LookAt(t.position + t.forward * 3f + Vector3.up * 0.3f);
-            Shot(cam, "car_back");
-        }
 
         foreach (var (name, xz0) in Places)
         {
@@ -95,6 +84,21 @@ public class PortfolioCapture : MonoBehaviour
                 yield return null;
                 Shot(cam, $"{name}_{a}");
             }
+            if (car != null && (name == "dieringhausen" || name == "a4_overath" || name == "koeln_dom"))
+            {
+                car.RPC_Summon(cam.transform.position, Vector3.forward);
+                yield return new WaitForSeconds(3f);
+                var t = car.transform;
+                Debug.Log($"[Portfolio] car at {name}: {t.position}");
+                cam.transform.position = t.position + t.forward * 2.4f + t.right * 1.7f + Vector3.up * 0.6f;
+                cam.transform.LookAt(t.position + Vector3.up * 0.25f);
+                yield return null;
+                Shot(cam, $"car_{name}_front");
+                cam.transform.position = t.position - t.forward * 2.8f + Vector3.up * 0.9f;
+                cam.transform.LookAt(t.position + t.forward * 4f + Vector3.up * 0.3f);
+                yield return null;
+                Shot(cam, $"car_{name}_back");
+            }
             cam.transform.position = new Vector3(xz.x, y + 25f, xz.y - 35f);
             cam.transform.rotation = Quaternion.Euler(28f, 0f, 0f);
             yield return new WaitForSeconds(2f);
@@ -106,7 +110,7 @@ public class PortfolioCapture : MonoBehaviour
             var xz = Places[0].xz * k;
             cam.transform.position = new Vector3(xz.x, Ground(xz) + 0.55f, xz.y);
             yield return new WaitForSeconds(3f);
-            foreach (var (hour, tag) in new[] { (19.5f, "sunset"), (23f, "night") })
+            foreach (var (hour, tag) in new[] { (17.5f, "evening"), (23f, "night") })
             {
                 dn.offset += hour - MapDayNight.Hour;
                 yield return new WaitForSeconds(2f);
