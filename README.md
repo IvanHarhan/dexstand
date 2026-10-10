@@ -6,7 +6,7 @@
 
 ## Download (Windows)
 
-**[Releases → Dexstand-Windows.7z.001 + .002](https://github.com/IvanHarhan/dexstand/releases/latest)** — download both parts into one folder, open `.001` with [7-Zip](https://www.7-zip.org/), run `Dexstand.exe`. ~3.7 GB packed, ~5.8 GB unpacked.
+**[Releases → Dexstand-Windows.7z.001 … .008](https://github.com/IvanHarhan/dexstand/releases/latest)** — download all parts into one folder, open `.001` with [7-Zip](https://www.7-zip.org/), run `Dexstand.exe`. ~3.7 GB packed, ~5.8 GB unpacked.
 
 ## Screenshots
 
